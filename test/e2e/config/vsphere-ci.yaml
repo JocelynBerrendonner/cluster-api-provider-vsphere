@@ -1,0 +1,104 @@
+---
+# E2E test scenario using local dev images and manifests built from the source tree for following providers:
+# - cluster-api
+# - bootstrap kubeadm
+# - control-plane kubeadm
+# - vsphere
+
+# For creating local images, run ./hack/e2e.sh
+
+images:
+  - name: gcr.io/k8s-staging-cluster-api/cluster-api-controller-amd64:v0.3.11
+    loadBehavior: tryLoad
+  - name: gcr.io/k8s-staging-cluster-api/kubeadm-bootstrap-controller-amd64:v0.3.11
+    loadBehavior: tryLoad
+  - name: gcr.io/k8s-staging-cluster-api/kubeadm-control-plane-controller-amd64:v0.3.11
+    loadBehavior: tryLoad
+  - name: gcr.io/k8s-staging-cluster-api/capv-manager:e2e
+    loadBehavior: mustLoad
+  - name: quay.io/jetstack/cert-manager-cainjector:v0.16.1
+    loadBehavior: tryLoad
+  - name: quay.io/jetstack/cert-manager-webhook:v0.16.1
+    loadBehavior: tryLoad
+  - name: quay.io/jetstack/cert-manager-controller:v0.16.1
+    loadBehavior: tryLoad
+
+providers:
+
+  - name: cluster-api
+    type: CoreProvider
+    versions:
+      - name: v0.3.11
+        # Use manifest from source files
+        value: "https://github.com/kubernetes-sigs/cluster-api/releases/download/v0.3.11/core-components.yaml"
+        type: "url"
+        replacements:
+          - old: "imagePullPolicy: Always"
+            new: "imagePullPolicy: IfNotPresent"
+          - old: "--enable-leader-election"
+            new: "--enable-leader-election=false"
+
+  - name: kubeadm
+    type: BootstrapProvider
+    versions:
+      - name: v0.3.11
+        # Use manifest from source files
+        value: "https://github.com/kubernetes-sigs/cluster-api/releases/download/v0.3.11/bootstrap-components.yaml"
+        type: "url"
+        replacements:
+          - old: "imagePullPolicy: Always"
+            new: "imagePullPolicy: IfNotPresent"
+          - old: "--enable-leader-election"
+            new: "--enable-leader-election=false"
+
+  - name: kubeadm
+    type: ControlPlaneProvider
+    versions:
+      - name: v0.3.11
+        # Use manifest from source files
+        value: "https://github.com/kubernetes-sigs/cluster-api/releases/download/v0.3.11/control-plane-components.yaml"
+        type: "url"
+        replacements:
+          - old: "imagePullPolicy: Always"
+            new: "imagePullPolicy: IfNotPresent"
+          - old: "--enable-leader-election"
+            new: "--enable-leader-election=false"
+
+  - name: vsphere
+    type: InfrastructureProvider
+    versions:
+      - name: v0.6.0
+        # Use manifest from source files
+        value: ../../../../cluster-api-provider-vsphere/config
+        replacements:
+          - old: gcr.io/cluster-api-provider-vsphere/release/manager:latest
+            new: gcr.io/k8s-staging-cluster-api/capv-manager:e2e
+          - old: "imagePullPolicy: Always"
+            new: "imagePullPolicy: IfNotPresent"
+
+    files:
+      # Add a cluster template
+      - sourcePath: "../../../test/e2e/data/infrastructure-vsphere/cluster-template.yaml"
+
+variables:
+  KUBERNETES_VERSION: "v1.19.1"
+  CNI: "./data/cni/calico/calico.yaml"
+  EXP_CLUSTER_RESOURCE_SET: "true"
+  CONTROL_PLANE_MACHINE_COUNT: 1
+  WORKER_MACHINE_COUNT: 1
+  VSPHERE_TLS_THUMBPRINT: "4F:AF:22:BD:C8:B2:AC:DE:0A:04:71:02:D1:62:05:50:2B:A2:54:E9"
+  VSPHERE_DATACENTER:  "SDDC-Datacenter"
+  VSPHERE_FOLDER: "clusterapi"
+  VSPHERE_RESOURCE_POOL: "clusterapi"
+  VSPHERE_DATASTORE: "WorkloadDatastore"
+  VSPHERE_NETWORK: "sddc-cgw-network-8"
+  VSPHERE_HAPROXY_TEMPLATE: "capv-haproxy-v0.6.3"
+  VSPHERE_TEMPLATE: "ubuntu-1804-kube-v1.19.1"
+
+intervals:
+  default/wait-controllers: ["5m", "10s"]
+  default/wait-cluster: ["5m", "10s"]
+  default/wait-control-plane: ["5m", "10s"]
+  default/wait-worker-nodes: ["5m", "10s"]
+  default/wait-delete-cluster: ["5m", "10s"]
+  default/wait-machine-upgrade: ["15m", "1m"]

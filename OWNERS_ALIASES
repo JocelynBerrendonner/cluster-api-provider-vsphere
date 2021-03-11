@@ -1,0 +1,26 @@
+# See the OWNERS docs: https://git.k8s.io/community/docs/devel/owners.md
+
+aliases:
+  sig-cluster-lifecycle-leads:
+    - justinsb
+    - neolit123
+    - timothysc
+  cluster-api-admins:
+    - detiber
+    - justinsb
+    - davidewatson
+    - vincepri
+  cluster-api-maintainers:
+    - justinsb
+    - detiber
+    - vincepri
+    - chuckha
+  cluster-api-vsphere-maintainers:
+    - frapposelli
+    - yastij
+    - randomvariable
+  cluster-api-vsphere-emeritus-maintainers:
+    - sidharthsurana
+    - figo
+    - akutz
+    - andrewsykim
